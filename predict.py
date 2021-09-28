@@ -7,7 +7,6 @@
     python predict.py input_flower.jpg ./checkpoint.pth
 '''
 
-import matplotlib.pyplot as plt
 import torch
 from torch import nn, optim
 import torch.nn.functional as F
