@@ -4,7 +4,7 @@
     Programmer: Michael Gaine
     Date: 07-07-2021
 
-    (Note for smaller GPUs: Change batch sizes to 32 and epochs to 2 for GPU memory purposes)
+    (Note for smaller GPUs: Consider smaller batch sizes)
 
     Command Line: python train.py data_dir --arch vgg16 --epochs 4
 '''
