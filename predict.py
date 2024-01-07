@@ -14,7 +14,6 @@ from torchvision import datasets, transforms, models
 import argparse
 import json
 import numpy as np
-import PIL
 from PIL import Image
 
 # Grab arguments (input, checkpoint, --top_k #, --category_names filename.json, --gpu enabled/disabled)
@@ -25,13 +24,9 @@ parser.add_argument('--top_k', type=int, default=5, help='top K most likely clas
 parser.add_argument('--category_names', type=str, help='category name file (i.e. cat_to_name.json)')
 parser.add_argument('--gpu', action="store_true", help="include '--gpu' to use GPU, otherwise CPU will be used")
 
-
-# Load the command line params and data
 args = parser.parse_args()
 
-# Load command line params
-if args.top_k:
-    top_k = args.top_k
+top_k = args.top_k
 if args.category_names:
     category_names = args.category_names
 else:
@@ -44,13 +39,10 @@ else:
 image_path = args.input
 checkpoint = args.checkpoint
 
-
 with open(category_names, 'r') as f:
     cat_to_name = json.load(f)
 
-
 # Load a checkpoint and rebuild the model
-
 def load_checkpoint(checkpoint):
     checkpoint = torch.load(checkpoint)
     model = getattr(models, checkpoint['arch'])(pretrained=True)
@@ -76,18 +68,16 @@ def process_image(image_path):
     ''' Scales, crops, and normalizes a PIL image for a PyTorch model,
         returns an Numpy array
     '''
-
-    # Process PIL image for use in a PyTorch model
-
     pil_image = PIL.Image.open(image_path)
 
-    img_transform = transforms.Compose([transforms.Resize(256),
-                                        transforms.CenterCrop(224),
-                                        transforms.ToTensor(),
-                                        transforms.Normalize([0.485, 0.456, 0.406],
-                                                             [0.229, 0.224, 0.225])])
+    img_transform = transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+    
     pil_image = img_transform(pil_image)
-    global np_image
     np_image = np.array(pil_image)
     return np_image
 
@@ -129,16 +119,9 @@ def predict(image_path, model, topk = top_k):
     classes = [idx_to_class[x] for x in ps_topk_idx]
 
     # Return top_prob and top_k variables
-
     return ps_topk, classes
 
-    print(ps_topk)
-    print(classes)
-
-
-
 # Output the flower prediction values
-
 ps_topk, classes = predict(image_path, model)
 names = [cat_to_name[str(index)] for index in classes]
 print('\nThe system has predicted that the flower entered is a: ')
