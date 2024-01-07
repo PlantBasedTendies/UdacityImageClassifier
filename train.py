@@ -17,7 +17,7 @@ from torchvision import datasets, transforms, models
 import argparse
 import os
 
-
+# Argument parsing
 parser = argparse.ArgumentParser(description='Input arguments')
 parser.add_argument('data_dir', type=str, default='flowers', help='data directory')
 parser.add_argument('--save_dir', type=str, help='checkpoint directory')
@@ -46,23 +46,25 @@ else:
     device = "cpu"
 
 data_dir = args.data_dir
-train_dir = data_dir + '/train'
-valid_dir = data_dir + '/valid'
-test_dir = data_dir + '/test'
+train_dir = os.path.join(data_dir, 'train')
+valid_dir = os.path.join(data_dir, 'valid')
+test_dir = os.path.join(data_dir, 'test')
 
 
 # Define your transforms for the training, validation, and testing sets
-train_transforms = transforms.Compose([transforms.RandomRotation(30),
-                                       transforms.RandomResizedCrop(224),
-                                       transforms.RandomHorizontalFlip(),
-                                       transforms.ToTensor(),
-                                       transforms.Normalize([0.485, 0.456, 0.406],
-                                                            [0.229, 0.224, 0.225])])
+train_transforms = transforms.Compose([
+    transforms.RandomRotation(30),
+    transforms.RandomResizedCrop(224),
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+])
 
-valid_test_transforms = transforms.Compose([transforms.CenterCrop(224),
-                                       transforms.ToTensor(),
-                                       transforms.Normalize([0.485, 0.456, 0.406],
-                                                            [0.229, 0.224, 0.225])])
+valid_test_transforms = transforms.Compose([
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+])
 
 # Load the datasets with ImageFolder
 train_dataset = datasets.ImageFolder(train_dir, transform=train_transforms)
@@ -75,7 +77,7 @@ validloader = torch.utils.data.DataLoader(valid_dataset, batch_size=32, shuffle=
 testloader = torch.utils.data.DataLoader(test_dataset, batch_size=32, shuffle=False)
 
 
-## Build and train the network
+# Build and train the network
 
 # Load model using architect argument
 model = getattr(models, args.arch)(pretrained=True)
@@ -84,22 +86,21 @@ model = getattr(models, args.arch)(pretrained=True)
 for param in model.parameters():
     param.requires_grad = False
 
-model.classifier = nn.Sequential(nn.Linear(25088, hidden_units),
-                                 nn.ReLU(),
-                                 nn.Dropout(0.2),
-                                 nn.Linear(hidden_units, 102),
-                                 nn.LogSoftmax(dim=1))
+model.classifier = nn.Sequential(
+    nn.Linear(25088, hidden_units),
+    nn.ReLU(),
+    nn.Dropout(0.2),
+    nn.Linear(hidden_units, 102),
+    nn.LogSoftmax(dim=1)
+)
 
 criterion = nn.NLLLoss()
 
 # Only train the classifier parameters, feature parameters are frozen
 optimizer = optim.Adam(model.classifier.parameters(), lr=learning_rate)
-
 model.to(device);
 
-
-## Track loss and accuracy on validation set
-
+# Training and validation loops
 steps = 0
 running_loss = 0
 print_every = 5
@@ -109,11 +110,10 @@ for epoch in range(epochs):
         steps += 1
         # Move input and label tensors to the default device
         inputs, labels = inputs.to(device), labels.to(device)
+        optimizer.zero_grad()
         
         output = model.forward(inputs)
         loss = criterion(output, labels)
-        
-        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
@@ -123,6 +123,7 @@ for epoch in range(epochs):
             valid_loss = 0
             accuracy = 0
             model.eval()
+            
             with torch.no_grad():
                 for inputs, labels in validloader:
                     inputs, labels = inputs.to(device), labels.to(device)
@@ -145,19 +146,16 @@ for epoch in range(epochs):
             model.train()
 
 
-## Track loss and accuracy on the Test set
-
-
+# Testing loop
 for epoch in range(epochs):
     for inputs, labels in trainloader:
         steps += 1
         # Move input and label tensors to the default device
         inputs, labels = inputs.to(device), labels.to(device)
-        
+        optimizer.zero_grad()
+                
         output = model.forward(inputs)
         loss = criterion(output, labels)
-        
-        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
@@ -167,6 +165,7 @@ for epoch in range(epochs):
             test_loss = 0
             accuracy = 0
             model.eval()
+ 
             with torch.no_grad():
                 for inputs, labels in testloader:
                     inputs, labels = inputs.to(device), labels.to(device)
@@ -174,7 +173,6 @@ for epoch in range(epochs):
                     batch_loss = criterion(output, labels)
                     
                     test_loss += batch_loss.item()
-                    
                     # Calculate accuracy
                     ps = torch.exp(output)
                     top_p, top_class = ps.topk(1, dim=1)
@@ -188,10 +186,7 @@ for epoch in range(epochs):
             running_loss = 0
             model.train()
 
-
-
 # Save the checkpoint
-
 checkpoint = {'classifier': model.classifier,
               'arch': arch,
               'hidden_units': hidden_units,
@@ -200,7 +195,6 @@ checkpoint = {'classifier': model.classifier,
               'class_to_idx': train_dataset.class_to_idx, #saves mapping of classes to indices
               'state_dict': model.state_dict(), #saves the learnable parameter layers into a python dictionary
               'optimizer_dict': optimizer.state_dict()}
-
 
 if args.save_dir:
     os.mkdir(args.save_dir)
