@@ -9,7 +9,6 @@
     Command Line: python train.py data_dir --arch vgg16 --epochs 4
 '''
 
-
 import torch
 from torch import nn, optim
 import torch.nn.functional as F
@@ -26,7 +25,6 @@ parser.add_argument('--hidden_units', type=int, default=256, help='hidden units'
 parser.add_argument('--learning_rate', type=float, default=.001, help='learning rate')
 parser.add_argument('--epochs', type=int, default=2, help='epochs')
 parser.add_argument('--gpu', action="store_true", help="use GPU if '--gpu' is specified")
-
 
 # Load the command line params and data
 args = parser.parse_args()
@@ -49,7 +47,6 @@ data_dir = args.data_dir
 train_dir = os.path.join(data_dir, 'train')
 valid_dir = os.path.join(data_dir, 'valid')
 test_dir = os.path.join(data_dir, 'test')
-
 
 # Define your transforms for the training, validation, and testing sets
 train_transforms = transforms.Compose([
@@ -144,7 +141,6 @@ for epoch in range(epochs):
                   f"Validation Accuracy: {accuracy/len(validloader):.3f}")
             running_loss = 0
             model.train()
-
 
 # Testing loop
 for epoch in range(epochs):
