@@ -81,7 +81,6 @@ def process_image(image_path):
     np_image = np.array(pil_image)
     return np_image
 
-
 # Class prediction
 def predict(image_path, model, topk = top_k):
     ''' Predict the class (or classes) of an image using a trained deep learning model.
